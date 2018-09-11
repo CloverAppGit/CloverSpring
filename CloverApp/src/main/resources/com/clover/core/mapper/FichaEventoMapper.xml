@@ -1,0 +1,115 @@
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.clover.core.mapper.FichaEventoMapper">
+
+    <select id="getGeneral" resultType="java.util.HashMap">
+        SELECT
+		    e.id_evento,
+		    e.titulo,
+		    UPPER(DATE_FORMAT(fecha, '%d %b')) as fecha,
+		    DATE_FORMAT(fecha, '%H:%i') as hora,
+		    (SELECT 
+		        count(id_usuario) 
+		    FROM 
+		        usu_even
+		    WHERE
+		        id_evento = e.id_evento
+		    ) as asistentes,
+		    (SELECT
+		        CONCAT(CONVERT(sum(precio), char), '€')
+		    FROM
+		        actividad
+		    WHERE
+		        id_actividad IN (
+		            SELECT
+		                id_actividad
+		            FROM
+		                even_act
+		            WHERE
+		                id_evento = e.id_evento
+		        )
+		    ) as precioPersona,
+		    CONCAT(CONVERT(sum(a.precio), char), '€') as precioTotal
+		FROM
+		    evento e
+		LEFT JOIN usu_even ue ON ue.id_evento = e.id_evento
+		LEFT JOIN actividad a ON a.id_actividad IN (SELECT id_actividad FROM even_act WHERE id_evento = e.id_evento)
+		WHERE
+		    e.id_evento = #{idEvento}
+		GROUP BY 
+		    e.id_evento, e.titulo, UPPER(DATE_FORMAT(fecha, '%d %b')), DATE_FORMAT(fecha, '%H:%i')
+    </select>
+
+    <select id="getAsistentes" resultType="java.util.HashMap">
+        SELECT
+			id_usuario as id,
+			nombre,
+			picture
+        FROM
+        	usuario
+        WHERE
+        	id_usuario IN (
+        		SELECT 
+        			id_usuario
+        		FROM
+        			usu_even
+        		WHERE
+        			id_evento = #{idEvento}
+        	)
+    </select>
+
+    <select id="getActividades" resultType="java.util.HashMap">
+        SELECT
+		    a.nombre,
+		    em.nombre AS nombreEmpresa,
+		    em.lat,
+		    em.lon,
+		    a.precio,
+		    DATE_FORMAT(ev.fecha,'%d/%m') as fecha,
+		    DATE_FORMAT(ev.fecha,'%H:%i') as hora
+		FROM
+		    actividad a,
+		    empresa em,
+		    evento ev
+		WHERE
+		    a.id_empresa = em.id_empresa
+		    AND a.tipo = 'R'
+		    AND id_actividad IN (
+		        SELECT 
+		            id_actividad
+		        FROM
+		            even_act
+		        WHERE
+		            id_evento = #{idEvento}
+		    )
+		    AND ev.id_evento = #{idEvento}
+		UNION 
+		SELECT
+		    a.nombre,
+		    em.nombre AS nombreEmpresa,
+		    em.lat,
+		    em.lon,
+		    a.precio,
+		    DATE_FORMAT(DATE_ADD(ev.fecha, INTERVAL 1 DAY),'%d/%m') as fecha,
+		    '00:00' as hora
+		FROM
+		    actividad a,
+		    empresa em,
+		    evento ev
+		WHERE
+		    a.id_empresa = em.id_empresa
+		    AND a.tipo = 'C'
+		    AND id_actividad IN (
+		        SELECT 
+		            id_actividad
+		        FROM
+		            even_act
+		        WHERE
+		            id_evento = #{idEvento}
+		    )
+		    AND ev.id_evento = #{idEvento}
+		ORDER BY fecha, hora
+    </select>
+</mapper>

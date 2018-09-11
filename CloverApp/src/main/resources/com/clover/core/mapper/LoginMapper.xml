@@ -1,0 +1,15 @@
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.clover.core.mapper.LoginMapper">
+    <select id="getUsuario" resultType="java.util.HashMap">
+        SELECT
+			id_usuario as id,
+			nombre
+		FROM
+			usuario
+		WHERE
+			id_usuario = #{idUsuario}
+    </select>
+</mapper>

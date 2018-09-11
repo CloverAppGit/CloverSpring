@@ -1,0 +1,27 @@
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.clover.core.mapper.MainMapper">
+
+    <select id="getEventos" resultType="java.util.HashMap">
+        SELECT
+        	id_evento as id,
+        	titulo,
+        	fecha
+        FROM
+        	evento
+        WHERE
+        	id_evento IN (
+        		SELECT 
+        			id_evento
+        		FROM 
+        			usu_even
+        		WHERE
+        			id_usuario = #{idUsuario}
+        	)
+        ORDER BY
+        	fecha ASC
+    </select>
+    
+</mapper>
